@@ -1,0 +1,107 @@
+- name: Installation de Python
+  ansible.builtin.apt:
+    name: "python3"
+  become: true
+
+- name: Installation de pip
+  ansible.builtin.apt:
+    name: "python3-pip"
+  become: true
+
+- name: Installation de mysql
+  ansible.builtin.apt:
+    name: python3-pymysql
+  become: true
+  
+- name: Installing Mysql  and dependencies
+  package:
+    name: "{{item}}"
+    state: present
+    update_cache: yes
+  loop:
+    - mariadb-server
+    - mariadb-client 
+    - python3-mysqldb
+    - libmariadb-dev
+  become: yes
+
+
+- name: Allow MariaDB remote connections
+  lineinfile:
+    path: /etc/mysql/mariadb.conf.d/50-server.cnf
+    regexp: '^bind-address'
+    line: 'bind-address = 0.0.0.0'
+  become: true
+
+- name: start and enable mysql service
+  ansible.builtin.service:
+    name: mariadb
+    state: restarted
+  become: true
+
+
+- name: start and enable mysql service
+  ansible.builtin.service:
+    name: mysql
+    state: restarted
+  become: true
+
+
+
+
+- name: Create group lab_20_cytech-group
+  ansible.builtin.group:
+    name: lab_20_cytech-group
+    state: present
+  become: true
+
+- name: Create linux user lab20_cytech in lab_20_cytech-group
+  ansible.builtin.user:
+    name: lab20_cytech
+    groups: lab_20_cytech-group
+    state: present
+  become: true
+
+- name: Create  user with name 'formation' with all database privileges
+  community.mysql.mysql_user:
+    name: formation
+    password: 12345
+    priv: '*.*:ALL'
+    state: present
+    config_file: /etc/mysql/mariadb.cnf
+    login_unix_socket: /run/mysqld/mysqld.sock
+    host: "%"
+  become: true
+
+
+
+- name: Create cytech database
+  community.mysql.mysql_db:
+    name: cytech
+    login_user: formation
+    login_password: 12345
+    config_file: /etc/mysql/my.cnf
+    login_unix_socket: /run/mysqld/mysqld.sock
+  become: true
+
+- name: Copie du script de création de la table
+  ansible.builtin.copy:
+    src: table.sql
+    dest: /home/formation/table.sql
+  become: yes
+
+- name: Création table
+  mysql_db:
+    state: import
+    login_user: formation
+    login_password: 12345
+    name: cytech
+    target: /home/formation/table.sql
+    config_file: /etc/mysql/my.cnf
+    login_unix_socket: /run/mysqld/mysqld.sock
+  become: true
+
+
+
+
+    

@@ -1,0 +1,90 @@
+- name: Installation de Python
+  ansible.builtin.apt:
+    name: "python3"
+  become: true
+
+- name: Installation de python-env
+  ansible.builtin.apt:
+    name: "python3.11-venv"
+  become: true
+
+
+
+- name: Installation de pip
+  ansible.builtin.apt:
+    name: "python3-pip"
+  become: true
+
+- name: Installation de virtualenv
+  ansible.builtin.apt:
+    name: virtualenv
+  become: true
+
+
+- name: Create virtual environment
+  ansible.builtin.command:
+    cmd: "python3 -m venv /home/formation/venv"
+
+- name: Activate virtual environment
+  ansible.builtin.shell:
+    cmd: "/bin/bash -c 'source /home/formation/venv/bin/activate'"
+    chdir: "/home/formation"
+
+
+
+- name: Installation de Flask
+  ansible.builtin.pip:
+    name: flask
+    virtualenv: "/home/formation/venv"
+
+- name: Installation de Flask mysql
+  ansible.builtin.pip:
+    name: flask-mysql
+    virtualenv: "/home/formation/venv"
+
+
+
+- name: Copy MySQL configuration file to remote server
+  ansible.builtin.copy:
+    src: "/etc/mysql/my.cnf"
+    dest: "/home/formation/.my.cnf"
+    owner: formation
+    group: formation
+    mode: '0600'
+    remote_src: true
+  delegate_to: 10.10.10.201
+
+- name: Création du programme
+  ansible.builtin.copy:
+    src: api.py
+    dest: "/home/formation/venv/api.py"
+  become: true
+
+- name: connexion vers la base de données cytech et requête SQL
+  community.mysql.mysql_query:
+    login_db: cytech
+    login_user: formation
+    login_password: 12345
+    query: SELECT * FROM users
+    config_file: /etc/mysql/my.cnf
+    login_unix_socket: /run/mysqld/mysqld.sock
+  delegate_to: 10.10.10.201
+  register: parm
+
+- name: test
+  ansible.builtin.debug:
+    var: parm
+    
+- name: Lancement du programme
+  ansible.builtin.script:
+    chdir: "/home/formation/venv/"
+    cmd: "script.sh"
+  become: yes
+
+
+
+
+
+
+
+

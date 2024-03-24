@@ -1,0 +1,4 @@
+username: "formation"
+password: "12345"
+host: "10.10.10.201"
+database: "cytech"

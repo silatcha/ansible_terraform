@@ -1,0 +1,19 @@
+#cloud-config
+runcmd:
+  - echo "print(\"Hello, world!\")" >> python.py
+  - python3 python.py
+  - sudo hostnamectl set-hostname ${name}
+instance-id: ${name}
+local-hostname: ${name}
+network:
+  version: 1
+  config:
+    - type: physical
+      name: ens35
+      subnets:
+        - type: static
+          address: ${my_ip}/24
+          gateway: 10.10.10.254
+    - type: nameserver
+      address:
+        - 10.10.10.254

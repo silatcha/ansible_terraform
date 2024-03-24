@@ -1,0 +1,8 @@
+[init]
+	defaultBranch = none
+[fetch]
+	recurseSubmodules = false
+[transfer]
+	bundleURI = true
+[http "https://git-formation.adlere.fr"]
+	sslCAInfo = /home/lab20/lab20_tp_note/builds/p-1fo5euX/0/cytech-formation-etu/lab20/lab20_tp_note.tmp/CI_SERVER_TLS_CA_FILE

@@ -1,0 +1,31 @@
+- name: Test playbook
+  hosts: lab20_ansible_bdd
+  connection: ssh
+  gather_facts: no
+
+  tasks:
+
+    - name: Import du role
+      ansible.builtin.include_role:
+        name: role_mysql
+    
+    
+
+
+
+- name: Test playbook
+  hosts: lab20_ansible_app
+  connection: ssh
+  gather_facts: no
+
+  tasks:
+
+
+    - name: Import du role
+      ansible.builtin.include_role:
+        name: role_flask
+      when:
+        - inventory_hostname in groups["lab20_ansible_app"]
+
+
+   
