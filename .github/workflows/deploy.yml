@@ -1,155 +1,92 @@
-container: 
-  name: legallbapt/ovf
-  entrypoint:
-    - '/usr/bin/env'
-    - 'PATH=/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin'
-
-stages:
-  - terrafom_fmt
-  - validate_vm
-  - create_vm
-  - playbook_ansible
-  - curl_command
-  - destroy_vm
-
-validate_vm-stage:
-  stage: validate_vm
-  only:
-    - main
-  before_script:
-    - echo "validation..."
-  script:
-    - ./terraform/script_init.sh
-    - terraform -chdir="./terraform" --version
-    - terraform -chdir="./terraform"  plan -var "esxi_password=$TF_VAR_esxi_password" -var "esxi_username=$TF_VAR_esxi_username"
-  after_script:
-    - echo "Finish..."
-  tags:
-    - lab20
-
-
-terrafom_fmt-stage:
-  stage: terrafom_fmt
-  only:
-    - main
-  before_script:
-    - echo "formatation..."
-  script:
-    - ./terraform/script_init.sh
-    - terraform -chdir="./terraform" fmt
-
-  after_script:
-    - echo "Finish..."
-  tags:
-    - lab20
-
-
-create_vm-stage:
-  stage: create_vm
-  only:
-    - main
-  before_script:
-    - echo "Initialisation..."
-  script:
-    - ./terraform/script_init.sh
-    - terraform -chdir="./terraform"  --version
-    - terraform -chdir="./terraform"  apply -var "esxi_password=''" -var "esxi_username=''" --auto-approve
-  after_script:
-    - echo "Finish..."
-  tags:
-    - lab20
-
-
-
-
-playbook_ansible-stage:
-  stage: playbook_ansible
-  only:
-    - main
-  before_script:
-    - echo "execution playbook..."
-  script:
-    - ansible-playbook -i inventory.ini --ssh-common-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ansible/playbook.yml 
-  after_script:
-    - echo "Finish..."
-  tags:
-    - lab20
-
-
-curl_command-stage:
-  stage: curl_command
-  before_script:
-    - echo "curl 10.10.10.200..."
-  script: 
-    - curl http://10.10.10.200:8080
-
-  after_script:
-    - echo "Finish curl..."
-
-  tags:
-    - lab20
-
-
-destroy_vm-stage:
-  stage: destroy_vm
-  before_script:
-    - echo "VM it's to be destroyed..."
-  script: 
-    - ./terraform/script_init.sh
-    - terraform -chdir="./terraform"  --version
-    - terraform  -chdir="./terraform"  destroy -var "esxi_password=$TF_VAR_esxi_password" -var "esxi_username=$TF_VAR_esxi_username" --auto-approve
-  after_script:
-    - echo "Finish destroying..."
-
-  tags:
-    - lab20
-
-
-
-
-
-name: DevOps Test
-
+name: CI
 
 on:
   push:
     branches:
       - main
-      
-  pull_request:
-    branches:
-      - main
-
-  # Schedule the job to everyday to refresh dynamic first page
-  schedule:
-    - cron: '0 0 * * *'
 
 jobs:
-
-  rendering:
-    name: Build and deploy
+  validate_vm:
+    name: Validate VM
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up JDK 11
-        uses: actions/setup-java@v3
-        with:
-          java-version: '11'
-          distribution: 'temurin'
-          cache: maven
-      - name: clean with Maven
-        run: mvn clean
-      - name: Build with Maven
-        run: mvn install
-      - name: Deploy to GitHub jar 🚀
-        uses: JamesIves/github-pages-deploy-action@v4.3.0
-        with:
-          branch: build
-          folder: target
-      - name: Commit and Push new README.md to the repository
-        uses: actions-js/push@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
+      - name: Validation
+        run: |
+          echo "validation..."
+          ./terraform/script_init.sh
+          terraform -chdir="./terraform" --version
+          terraform -chdir="./terraform" plan -var "esxi_password=$TF_VAR_esxi_password" -var "esxi_username=$TF_VAR_esxi_username"
+       
 
- 
+  terrafom_fmt:
+    name: Format Terraform
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Formatation
+        run: |
+          echo "formatation..."
+          ./terraform/script_init.sh
+          terraform -chdir="./terraform" fmt
+        
+
+  create_vm:
+    name: Create VM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Initialization
+        run: |
+          echo "Initialization..."
+          ./terraform/script_init.sh
+          terraform -chdir="./terraform" --version
+          terraform -chdir="./terraform" apply -var "esxi_password=''" -var "esxi_username=''" --auto-approve
+        
+
+  playbook_ansible:
+    name: Run Ansible Playbook
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Execute playbook
+        run: |
+          echo "execution playbook..."
+          ansible-playbook -i inventory.ini --ssh-common-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ansible/playbook.yml
+        
+
+  curl_command:
+    name: Curl Command
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Curl
+        run: |
+          echo "curl 10.10.10.200..."
+          curl http://10.10.10.200:8080
+        
+
+  destroy_vm:
+    name: Destroy VM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: VM Destruction
+        run: |
+          echo "VM it's to be destroyed..."
+          ./terraform/script_init.sh
+          terraform -chdir="./terraform" --version
+          terraform -chdir="./terraform" destroy -var "esxi_password=$TF_VAR_esxi_password" -var "esxi_username=$TF_VAR_esxi_username" --auto-approve
+     
