@@ -20,27 +20,11 @@ jobs:
           terraform -chdir="./terraform" --version
           terraform -chdir="./terraform" plan -var "esxi_password=$TF_VAR_esxi_password" -var "esxi_username=$TF_VAR_esxi_username"
        
-
-  terrafom_fmt:
-    name: Format Terraform
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
       - name: Formatation
         run: |
           echo "formatation..."
           ./terraform/script_init.sh
           terraform -chdir="./terraform" fmt
-        
-
-  create_vm:
-    name: Create VM
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
 
       - name: Initialization
         run: |
@@ -48,14 +32,6 @@ jobs:
           ./terraform/script_init.sh
           terraform -chdir="./terraform" --version
           terraform -chdir="./terraform" apply -var "esxi_password=''" -var "esxi_username=''" --auto-approve
-        
-
-  playbook_ansible:
-    name: Run Ansible Playbook
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
 
       - name: Execute playbook
         run: |
@@ -63,25 +39,11 @@ jobs:
           ansible-playbook -i inventory.ini --ssh-common-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ansible/playbook.yml
         
 
-  curl_command:
-    name: Curl Command
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
       - name: Curl
         run: |
           echo "curl 10.10.10.200..."
           curl http://10.10.10.200:8080
         
-
-  destroy_vm:
-    name: Destroy VM
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
 
       - name: VM Destruction
         run: |
